@@ -43,28 +43,28 @@ The implementation is designed as a modular pipeline, transitioning from raw dat
     * **Inventory Impact:** High tracking accuracy reduces the requirement for "speculative" inventory.
 
 ### Plot 2: SKU 0 Baseline vs. Full Model Comparison
-![SKU 0 Baseline vs Full Model](Baseline_vs_full_model.png)
+![SKU 0 Baseline vs Full Model](images/Baseline_vs_full_model.png)
 * **Observation:** The Baseline (Orange) follows the mean trend but underestimates volatility. The Full Model (Green) exhibits significantly higher sensitivity to extreme values.
 * **Implications:**
     * **Information Gain:** Visual evidence that Baseline models suffer from "regression to the mean," while the Full Model captures the true amplitude of demand.
     * **Bias Mitigation:** The Baseline exhibits a downward bias during promotions; the Full Model corrects this, preventing stockouts during high-revenue periods.
 
 ### Plot 3: Error Distribution Comparison
-![Error Distribution Comparison](Error_distribution.png)
+![Error Distribution Comparison](images/Error_distribution.png)
 * **Observation:** The Full Model (Orange) shows a higher density at the 0–5 error bin and a "thinner tail" compared to the Baseline (Blue).
 * **Implications:**
     * **Heteroscedasticity Reduction:** Incorporating signals reduces residual variance. The Baseline’s "fat tail" (errors >30) represents high-risk failure points.
     * **Reliability:** A zero-centered error distribution makes the Full Model a more reliable point estimate for automated ordering.
 
 ### Plot 4: Scenario Impact: Demand vs. Promotion & Multiplier
-![Scenario Impact](Scnario_impact.png)
+![Scenario Impact](images/Scnario_impact.png)
 * **Observation:** Structured sensitivity analysis shows linear growth across multipliers with a consistent additive "lift" from promotions.
 * **Implications:**
     * **Decision Support:** Allows stakeholders to quantify expected load (e.g., "What is the load if we have 20% growth AND a promotion?").
     * **Linearity Validation:** Confirms the model has learned a stable, generalizable effect for marketing activities.
 
 ### Plot 5: Safety Stock Distribution Across SKUs
-![Safety Stock Distribution Across SKUs](Safty_stock.png)
+![Safety Stock Distribution Across SKUs](images/Safty_stock.png)
 * **Observation:** A histogram of safety stocks (52 to 60 units), showing a multi-modal distribution of risk.
 * **Implications:**
     * **Risk Quantization:** Translates uncertainty ($\sigma$) into capital ($units$).
