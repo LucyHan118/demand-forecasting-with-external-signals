@@ -1,4 +1,5 @@
 # Demand Forecasting & Risk-Aware Inventory Optimization
+Author: Lucy Han
 
 This project implements a multi-step forecasting framework to quantify the impact of exogenous signals on demand variability. By comparing an autoregressive baseline with a feature-enriched "Full Model," the analysis demonstrates how reducing forecast variance directly informs safety stock positioning and risk mitigation in supply chain operations.
 
@@ -84,5 +85,3 @@ The implementation is designed as a modular pipeline, transitioning from raw dat
 pip install -r requirements.txt
 # Run the analysis script or open the notebook
 python notebooks/demand_forecasting_analysis.py
-
-Author Lucy Han
