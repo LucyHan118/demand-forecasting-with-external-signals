@@ -35,7 +35,7 @@ The implementation is designed as a modular pipeline, transitioning from raw dat
 ## 3. Technical Analysis of Results
 
 ### Plot 1: SKU 0 Forecast vs. Actual (Full Model)
-![SKU 0 Forecast vs Actual](Forcast_vs_actual.png)
+![SKU 0 Forecast vs Actual](images/Forcast_vs_actual.png)
 * **Observation:** The predicted series (Orange) achieves high phase-alignment with actual demand (Blue), specifically tracking 7-day seasonality and the magnitude of non-periodic spikes.
 * **Implications:**
     * **Signal Capture:** The model successfully deconvolves "signal" from "noise," prioritizing structured variance over stochastic residuals.
