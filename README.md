@@ -1,87 +1,184 @@
 # Demand Forecasting & Risk-Aware Inventory Optimization
-Author: Lucy Han
-
-This project implements a multi-step forecasting framework to quantify the impact of exogenous signals on demand variability. By comparing an autoregressive baseline with a feature-enriched "Full Model," the analysis demonstrates how reducing forecast variance directly informs safety stock positioning and risk mitigation in supply chain operations.
+**Author:** Lucy Han
 
 ---
 
 ## 1. Project Overview
-Traditional time-series models often lag during sudden market shifts. This repository explores the integration of **synthetic external signals** (promotions, supply disruptions, and specific events) into a linear regression framework to improve responsiveness to non-linear shocks.
+Traditional time-series models often suffer from lag in responding to sudden market changes, as they rely primarily on historical demand. This project explores how incorporating **external signals** (e.g., promotions, disruptions, and events) can improve forecast accuracy and reduce uncertainty.
+
+To evaluate this, I compare:
+- A **Baseline Model** using only historical demand features
+- A **Full Model** that includes both historical features and external signals
+
+The objective is to quantify how much these additional signals improve predictions and how that translates into more efficient inventory decisions.
 
 ---
 
 ## 2. Code Structure & Components
 
-The implementation is designed as a modular pipeline, transitioning from raw data simulation to actionable inventory insights.
+The implementation is designed as a modular pipeline, moving from synthetic data generation to actionable inventory insights.
 
 ### **I. Data & Modeling Foundation (Sections 1–4)**
-* **Section 1: Data Generation:** Simulates a 25-SKU portfolio over 730 days using deterministic elements (trend + seasonality) and stochastic noise.
-* **Section 2: Feature Engineering:** Generates `lag_1` and `lag_7` to capture momentum, alongside 7-day rolling means/STDs for local context.
-* **Section 3 & 4: Model Training:** Implements a chronological split (80/20) to train a **Baseline Model** (historical data only) and a **Full Model** (historical + external signals).
+* **Section 1: Configuration & Reproducibility:** Establishes the environment using `np.random.seed(42)` to ensure synthetic data and results remain consistent and reproducible.
+* **Section 2: Synthetic Data Generation:** Simulates a 25-SKU portfolio over 730 days using a linear additive structure:  
+  `$Demand = Baseline + Trend + Seasonality + Signals + Noise$`.  
+  This creates a controlled “ground truth,” allowing us to evaluate how well the model recovers underlying demand drivers.
+* **Section 3: Feature Engineering:** Generates `lag_1` and `lag_7` to capture temporal momentum, along with 7-day rolling means and standard deviations to provide local statistical context.
+* **Section 4: Validation Strategy:** Implements a chronological 80/20 split to simulate forward-looking forecasting, ensuring the model is evaluated on unseen future data and avoiding leakage.
+
+---
 
 ### **II. Performance & Error Analytics (Sections 5–8)**
-* **Section 5: Performance Metrics:** Calculates **MAE** and **RMSE** to quantify the magnitude of error.
-* **Section 6: Variance Reduction:** Compares the variance ($\sigma^2$) of residuals to measure the "stability" gain of the Full Model.
-* **Section 7: Feature Impact:** Extracts regression coefficients to rank the influence of promotions, disruptions, and events on demand volume.
-* **Section 8: High-Uncertainty SKUs:** Aggregates errors at the SKU level to identify high-risk products requiring manual intervention or higher buffers.
-
-### **III. Scenario Simulation & Inventory Logic (Sections 9–11)**
-* **Section 9: Scenario Engine:** Stress-tests the supply chain by permuting multipliers and external flags to see "What-If" outcomes.
-* **Section 10: Safety Stock Calculation:** Translates forecast uncertainty into physical units using the formula: $Safety Stock = Z \times \sigma_d \times \sqrt{L}$.
-* **Section 11: Visualization:** Generates the diagnostic plots used for the technical analysis below.
+* **Section 5: Model Training & Comparison:** Trains both a **Baseline Model** (historical features only) and a **Full Model** (historical + external signals) to isolate the contribution of environmental variables.
+* **Section 6: SKU Comparison Selection:** Identifies “Peaceful” (low signal frequency) and “Active” (high signal frequency) SKUs to evaluate performance across different volatility levels.
+* **Section 7: Scenario Simulation Logic:** Builds a “what-if” framework to test the model under different market conditions (e.g., demand multipliers and signal combinations), generating multiple possible demand scenarios.
+* **Section 8: Results Demonstration:** Translates model outputs (MAE, RMSE, variance) into business-relevant metrics, including side-by-side safety stock comparisons.
 
 ---
 
-## 3. Technical Analysis of Results
+## 3. Detailed Numerical Analysis
 
-### Plot 1: SKU 0 Forecast vs. Actual (Full Model)
-![SKU 0 Forecast vs Actual](images/Forcast_vs_actual.png)
-* **Observation:** The predicted series (Orange) achieves high phase-alignment with actual demand (Blue), specifically tracking 7-day seasonality and the magnitude of non-periodic spikes.
-* **Implications:**
-    * **Signal Capture:** The model successfully deconvolves "signal" from "noise," prioritizing structured variance over stochastic residuals.
-    * **Responsiveness:** Alignment at peaks suggests coefficients for exogenous features are well-calibrated, allowing the model to "anticipate" shifts.
-    * **Inventory Impact:** High tracking accuracy reduces the requirement for "speculative" inventory.
+### **Table 1: Global Model Performance**
+```
+MODEL PERFORMANCE
+-----------------------------------------
+Baseline  -> MAE: 6.72, RMSE: 8.81
+Full Model-> MAE: 5.68, RMSE: 7.16
+MAE Improvement:  15.40%
+RMSE Improvement: 18.72%
+```
 
-### Plot 2: SKU 0 Baseline vs. Full Model Comparison
-![SKU 0 Baseline vs Full Model](images/Baseline_vs_full_model.png)
-* **Observation:** The Baseline (Orange) follows the mean trend but underestimates volatility. The Full Model (Green) exhibits significantly higher sensitivity to extreme values.
-* **Implications:**
-    * **Information Gain:** Visual evidence that Baseline models suffer from "regression to the mean," while the Full Model captures the true amplitude of demand.
-    * **Bias Mitigation:** The Baseline exhibits a downward bias during promotions; the Full Model corrects this, preventing stockouts during high-revenue periods.
-
-### Plot 3: Error Distribution Comparison
-![Error Distribution Comparison](images/Error_distribution.png)
-* **Observation:** The Full Model (Orange) shows a higher density at the 0–5 error bin and a "thinner tail" compared to the Baseline (Blue).
-* **Implications:**
-    * **Heteroscedasticity Reduction:** Incorporating signals reduces residual variance. The Baseline’s "fat tail" (errors >30) represents high-risk failure points.
-    * **Reliability:** A zero-centered error distribution makes the Full Model a more reliable point estimate for automated ordering.
-
-### Plot 4: Scenario Impact: Demand vs. Promotion & Multiplier
-![Scenario Impact](images/Scnario_impact.png)
-* **Observation:** Structured sensitivity analysis shows linear growth across multipliers with a consistent additive "lift" from promotions.
-* **Implications:**
-    * **Decision Support:** Allows stakeholders to quantify expected load (e.g., "What is the load if we have 20% growth AND a promotion?").
-    * **Linearity Validation:** Confirms the model has learned a stable, generalizable effect for marketing activities.
-
-### Plot 5: Safety Stock Distribution Across SKUs
-![Safety Stock Distribution Across SKUs](images/Safty_stock.png)
-* **Observation:** A histogram of safety stocks (52 to 60 units), showing a multi-modal distribution of risk.
-* **Implications:**
-    * **Risk Quantization:** Translates uncertainty ($\sigma$) into capital ($units$).
-    * **Operational Optimization:** Improving the forecast shifts this distribution left, **freeing up working capital** without increasing stockout risk.
+* **Interpretation:**  
+The Full Model improves both average error (MAE) and large-error sensitivity (RMSE). The stronger RMSE improvement suggests it handles demand spikes and shocks more effectively.
 
 ---
 
-## 4. Key Takeaways
-1.  **Exogenous signals are primary variance reducers:** Lags capture the "rhythm," but signals capture the "shocks."
-2.  **Uncertainty is a Cost:** Every unit of forecast error variance contributes to a higher Safety Stock requirement.
-3.  **Model Robustness:** Scenario simulation transforms static predictions into proactive risk management tools.
+### **Table 2: Variance Reduction**
+```
+VARIANCE REDUCTION
+--------------------------------------------
+Baseline Var: 77.60 | Full Model Var: 51.24
+Total Noise Reduction: 33.97%
+```
 
-## 5. Tech Stack
-* **Python:** Pandas, NumPy, Scikit-learn, Matplotlib
+* **Interpretation:**  
+The model explains about one-third of the variability that would otherwise appear as noise, reducing uncertainty in demand estimates and improving planning reliability.
 
-## 6. How to Run
-```bash
-pip install -r requirements.txt
-# Run the analysis script or open the notebook
-python notebooks/demand_forecasting_analysis.py
+---
+
+### **Table 3: Feature Impact (Weights)**
+```
+FEATURE IMPACT (WEIGHTS)
+-------------------------------
+          feature       coef
+5      disruption -20.090371
+4       promotion  14.492357
+6           event  10.286007
+1           lag_7   0.475327
+2  rolling_mean_7   0.298572
+0           lag_1   0.212158
+3   rolling_std_7   0.039911
+
+HIGH-UNCERTAINTY SKUs (TOP ERRORS)
+-----------------------------------
+sku   error (float64)
+7     6.233773
+9     6.181504
+17    6.048237
+18    6.025433
+21    6.022568
+```
+
+* **Interpretation:**  
+External signals (disruptions, promotions, events) have a stronger impact than short-term historical features. The higher weight of `lag_7` relative to `lag_1` also indicates a weekly demand pattern.
+
+---
+
+### **Table 4: Scenario Analysis (Active SKU 3)**
+```
+SCENARIO ANALYSIS (ACTIVE SKU 3)
+---------------------------------------------------
+    multiplier  promotion  disruption  avg_demand
+0          0.8          0           0   85.366878
+1          0.8          1           0   96.960764
+2          0.8          0           1   69.294581
+3          0.8          1           1   80.888467
+4          1.0          0           0  106.708598
+5          1.0          1           0  121.200955
+6          1.0          0           1   86.618226
+7          1.0          1           1  101.110584
+8          1.2          0           0  128.050317
+9          1.2          1           0  145.441146
+10         1.2          0           1  103.941871
+11         1.2          1           1  121.332700
+```
+
+* **Interpretation:**  
+Demand ranges from ~69 to ~145 units depending on conditions. This provides a useful range for planning inventory and capacity under uncertainty.
+
+---
+
+### **Table 5: Safety Stock Comparison**
+```
+SAFETY STOCK COMPARISON (PEACEFUL VS ACTIVE)
+------------------------------------------------
+SKU          SKU 2 (Peaceful)  SKU 3 (Active)
+Level                                        
+90% Service             36.22           35.70
+95% Service             46.70           46.01
+99% Service             65.94           64.98
+```
+
+* **Interpretation:**  
+By capturing key sources of variability, the model allows higher-volatility SKUs to be managed with similar safety stock levels as more stable ones.
+
+---
+
+## 4. Visual Evidence & Interpretations
+
+### **4.1 Forecast Accuracy Plots**
+![Forecast Accuracy Plots](images/Forecast_Accuracy_Plots.png)
+
+The Full Model tracks demand spikes more closely while remaining stable when demand is smooth.
+
+---
+
+### **4.2 Error Distribution (Histogram)**
+![Error Distribution](images/Error_Distribution.png)
+
+Errors are more concentrated around zero, indicating more consistent predictions.
+
+---
+
+### **4.3 Feature Importance (Bar Chart)**
+![Feature Importance](images/Feature_Importance.png)
+
+External signals rank above lag-based features, reinforcing their importance.
+
+---
+
+## 5. Key Takeaways
+1. External signals explain a meaningful portion of demand variability.
+2. Improved forecasts reduce large errors and operational risk.
+3. More accurate predictions allow for lower safety stock while maintaining service levels.
+
+---
+
+## 6. Tech Stack
+* Python (pandas, numpy)
+* scikit-learn (Linear Regression)
+* matplotlib, seaborn
+
+---
+
+## 7. How to Run
+1. Install dependencies:  
+   `pip install pandas numpy scikit-learn matplotlib seaborn`
+2. Run:  
+   `python demand_forecasting.py`
+3. Review outputs in the terminal and generated plots.
+
+---
+
+## 8. Conclusion
+Incorporating external signals into demand forecasting improves both accuracy and stability. In this project, the model reduces variance by about 34%, leading to more predictable demand estimates and more efficient inventory decisions. These results suggest that combining historical data with external context is an effective approach for building more responsive supply chain systems.
